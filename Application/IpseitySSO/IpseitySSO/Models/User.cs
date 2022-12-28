@@ -1,15 +1,14 @@
-﻿using AspNetCore.Identity.MongoDbCore.Models;
+﻿
+using AspNetCore.Identity.MongoDbCore.Models;
 using MongoDbGenericRepository.Attributes;
 
 namespace IpseitySSO.Models
 {
     [CollectionName("Users")]
-    public class User : MongoIdentityRole<Guid>
+    public class User : MongoIdentityUser<Guid>
     {
-        ////public string Name { get; set; } = string.Empty;
-        //public UserAdditionalEmails? AdditionalEmails { get; set; }
-        //public UserAvatar[] Avatars { get; set; } = null!;
-
+        public string Name { get; set; } = string.Empty;
+        public IList<UserAdditionalEmails>? AdditionalEmails { get; set; }
     }
 
     public class UserAdditionalEmails
@@ -19,10 +18,4 @@ namespace IpseitySSO.Models
         public bool EmailConfirmed { get; set; }
     }
 
-    public class UserAvatar
-    {
-        public Boolean Default { get; set; }
-
-        public string Image { get; set; } = string.Empty;
-    }
 }

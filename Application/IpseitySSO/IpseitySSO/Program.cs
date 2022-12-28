@@ -1,18 +1,17 @@
-﻿using IpseitySSO;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
+﻿using System.Data;
 using System.Text;
-using IpseitySSO.Models;
-using IpseitySSO.Services;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
 using AspNetCore.Identity.MongoDbCore.Extensions;
 using AspNetCore.Identity.MongoDbCore.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver.Core.Configuration;
+using IpseitySSO.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-ConfigurationManager configuration = builder.Configuration;
 
 // Add services to the container.
 // GuidSerialier(MongoDB.Bson.BsonType.String));
@@ -20,18 +19,13 @@ BsonSerializer.RegisterSerializer(new GuidSerializer(MongoDB.Bson.BsonType.Strin
 BsonSerializer.RegisterSerializer(new DateTimeSerializer(MongoDB.Bson.BsonType.String));
 BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(MongoDB.Bson.BsonType.String));
 
-// Mongodb
-builder.Services.Configure<DatabaseSettings>(
-    builder.Configuration.GetSection("SSODatabase"));
-builder.Services.AddSingleton<UsersService>();
-// For Identity
 //add mongoIdentityConfiguration...
 var mongoDbIdentityConfig = new MongoDbIdentityConfiguration
 {
     MongoDbSettings = new MongoDbSettings
     {
-        ConnectionString = configuration["SSODatabase:ConnectionString"],
-        DatabaseName = configuration["SSODatabase:DatabaseName"]
+        ConnectionString = "mongodb://AzureDiamond:hunter2@localhost:27017",
+        DatabaseName = "youtubemongodb"
     },
     IdentityOptionsAction = options =>
     {
@@ -53,27 +47,24 @@ builder.Services.ConfigureMongoDbIdentity<User, Role, Guid>(mongoDbIdentityConfi
     .AddRoleManager<RoleManager<Role>>()
     .AddDefaultTokenProviders();
 
-// Adding Authentication
-builder.Services.AddAuthentication(options =>
+
+builder.Services.AddAuthentication(x =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-// Adding Jwt Bearer
-.AddJwtBearer(options =>
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(x =>
 {
-    options.SaveToken = true;
-    options.RequireHttpsMetadata = true;
-    options.TokenValidationParameters = new TokenValidationParameters()
+    x.RequireHttpsMetadata = true;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
     {
+        ValidateIssuerSigningKey = true,
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidAudience = configuration["JWT:ValidAudience"],
-        ValidIssuer = configuration["JWT:ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:ValidIssuer"])),
+        ValidIssuer = "https://localhost:5001",
+        ValidAudience = "https://localhost:5001",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("1swek3и4ио24абе")),
         ClockSkew = TimeSpan.Zero
     };
 });
@@ -91,7 +82,6 @@ builder.Services.AddAuthentication(options =>
 
 //});
 
-builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -108,9 +98,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Authentication & Authorization
-app.UseAuthentication();
 app.UseAuthorization();
+app.UseAuthentication();
 
 app.MapControllers();
 

@@ -155,7 +155,7 @@ namespace IpseitySSO.Controllers
                 if (!validUser)
                     return Unauthorized();
 
-                var token = GetToken(LoginCaims(user));
+                var token = GetToken(await LoginCaimsAsync(user));
                 return StatusCode(StatusCodes.Status200OK, new LoginResponse
                 {
                     AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
@@ -195,7 +195,7 @@ namespace IpseitySSO.Controllers
             return token;
         }
 
-        private List<Claim> LoginCaims(User user)
+        private async Task<List<Claim>> LoginCaimsAsync(User user)
         {
             var claims = new List<Claim>
                 {
