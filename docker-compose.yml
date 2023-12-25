@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    depends_on:
+      - db
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sso-solemnity.rule=Host(`sso.solemnity.icu`)"
+    networks:
+      - default
+
+  db:
+    image: mariadb
+    restart: always
+    env_file:
+      - .db.env
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+volumes:
+  db-data:
+
+networks:
+  default:
+    external: true
+    name: proxy_default
