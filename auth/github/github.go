@@ -17,6 +17,7 @@ var (
 		Profile: "user",
 		Email:   "user:email",
 	}
+	Api = "https://api.github.com/user"
 )
 
 type GithubContext struct {

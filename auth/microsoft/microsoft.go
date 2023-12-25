@@ -17,6 +17,7 @@ var (
 		Profile: "User.Read",
 		Email:   "User.Read",
 	}
+	Api = "https://graph.microsoft.com/v1.0/me"
 )
 
 func AzureADEndpoint(tenant string) oauth2.Endpoint {

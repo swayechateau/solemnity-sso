@@ -17,6 +17,7 @@ var (
 		Profile: "https://www.googleapis.com/auth/userinfo.profile",
 		Email:   "https://www.googleapis.com/auth/userinfo.email",
 	}
+	Api = "https://www.googleapis.com/oauth2/v3/userinfo" //"https://www.googleapis.com/oauth2/v2/userinfo"
 )
 
 type GoogleContext struct {

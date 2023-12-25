@@ -3,13 +3,13 @@ package auth
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 
 	"sso/auth/config"
 	"sso/auth/github"
+	"sso/auth/user"
 
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
 )
 
@@ -24,55 +24,34 @@ var githubOauthConfig = &oauth2.Config{
 	},
 }
 
-func GithubLoginHandler(w http.ResponseWriter, r *http.Request) {
+func GithubLoginHandler(c echo.Context) error {
 	url := githubOauthConfig.AuthCodeURL(randomStateString)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func GithubCallbackHandler(w http.ResponseWriter, r *http.Request) {
-	content, err := getGithubUserInfo(r.FormValue("state"), r.FormValue("code"))
-	if err != nil {
-		fmt.Println(err.Error())
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-	fmt.Fprintf(w, "Content: %s\n", content)
-}
+func GithubCallbackHandler(c echo.Context) error {
+	state := c.QueryParam("state")
+	code := c.QueryParam("code")
 
-func getGithubUserInfo(state string, code string) ([]byte, error) {
 	if state != randomStateString {
-		return nil, fmt.Errorf("invalid oauth state")
+		return fmt.Errorf("invalid oauth state")
 	}
 
 	token, err := githubOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		return nil, fmt.Errorf("code exchange failed: %s", err.Error())
+		return fmt.Errorf("code exchange failed: %s", err.Error())
 	}
 
-	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
+	content, err := user.GetOAuthInfo(token, github.Api)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %s", err.Error())
+		fmt.Println(err.Error())
+		return c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 
-	req.Header.Add("Authorization", "token "+token.AccessToken)
-
-	client := &http.Client{}
-	response, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
-	}
-	defer response.Body.Close()
-
-	contents, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed reading response body: %s", err.Error())
-	}
-
-	return contents, nil
+	return c.String(http.StatusOK, "Content: "+string(content))
 }
 
-func GithubHandler(r *mux.Router) *mux.Router {
-	r.HandleFunc("/auth/github", GithubLoginHandler)
-	r.HandleFunc("/auth/github/callback", GithubCallbackHandler)
-	return r
+func GithubHandler(e *echo.Echo) {
+	e.GET("/auth/github", GithubLoginHandler)
+	e.POST("/auth/github/callback", GithubCallbackHandler)
 }

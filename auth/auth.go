@@ -1,15 +1,12 @@
 package auth
 
-import (
-	"github.com/gorilla/mux"
-)
+import "github.com/labstack/echo/v4"
 
 var randomStateString = "state" // make([]byte, 16)
 
-func AuthHandler(r *mux.Router) *mux.Router {
-	r = GoogleHandler(r)
-	r = GithubHandler(r)
-	r = MicrosoftHandler(r)
-	r = QRCodeHandler(r)
-	return r
+func AuthHandler(e *echo.Echo) {
+	GoogleHandler(e)
+	GithubHandler(e)
+	MicrosoftHandler(e)
+	// QRCodeHandler(e)
 }

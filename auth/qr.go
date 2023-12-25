@@ -1,14 +1,13 @@
 package auth
 
 import (
-	"net/http"
-
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
 )
 
-func QRCodeLoginHandler(w http.ResponseWriter, r *http.Request) { /* ... */ }
+func QRCodeLoginHandler(c *echo.Context) error {
+	return nil
+}
 
-func QRCodeHandler(r *mux.Router) *mux.Router {
-	r.HandleFunc("/auth/qr", QRCodeLoginHandler)
-	return r
+func QrHandler(e *echo.Echo) {
+	e.GET("/auth/qr", GithubLoginHandler)
 }
