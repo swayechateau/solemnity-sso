@@ -53,5 +53,5 @@ func GithubCallbackHandler(c echo.Context) error {
 
 func GithubHandler(e *echo.Echo) {
 	e.GET("/auth/github", GithubLoginHandler)
-	e.POST("/auth/github/callback", GithubCallbackHandler)
+	e.GET("/auth/github/callback", GithubCallbackHandler)
 }

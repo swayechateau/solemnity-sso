@@ -49,5 +49,5 @@ func GoogleCallbackHandler(c echo.Context) error {
 
 func GoogleHandler(e *echo.Echo) {
 	e.GET("/auth/google", GoogleLoginHandler)
-	e.POST("/auth/google/callback", GoogleCallbackHandler)
+	e.GET("/auth/google/callback", GoogleCallbackHandler)
 }

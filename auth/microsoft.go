@@ -52,5 +52,5 @@ func MicrosoftCallbackHandler(c echo.Context) error {
 
 func MicrosoftHandler(e *echo.Echo) {
 	e.GET("/auth/microsoft", MicrosoftLoginHandler)
-	e.POST("/auth/microsoft/callback", MicrosoftCallbackHandler)
+	e.GET("/auth/microsoft/callback", MicrosoftCallbackHandler)
 }
