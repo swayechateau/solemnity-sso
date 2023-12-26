@@ -47,7 +47,7 @@ func GoogleCallbackHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "Content: "+string(content))
 }
 
-func GoogleHandler(e *echo.Echo) {
-	e.GET("/auth/google", GoogleLoginHandler)
-	e.GET("/auth/google/callback", GoogleCallbackHandler)
+func GoogleHandler(a *echo.Group) {
+	a.GET("/google", GoogleLoginHandler)
+	a.GET("/google/callback", GoogleCallbackHandler)
 }

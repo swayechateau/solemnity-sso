@@ -51,7 +51,7 @@ func GithubCallbackHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "Content: "+string(content))
 }
 
-func GithubHandler(e *echo.Echo) {
-	e.GET("/auth/github", GithubLoginHandler)
-	e.GET("/auth/github/callback", GithubCallbackHandler)
+func GithubHandler(a *echo.Group) {
+	a.GET("/github", GithubLoginHandler)
+	a.GET("/github/callback", GithubCallbackHandler)
 }

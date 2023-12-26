@@ -1,12 +1,24 @@
 package auth
 
-import "github.com/labstack/echo/v4"
+import (
+	"sso/database"
+
+	"github.com/labstack/echo/v4"
+)
 
 var randomStateString = "state" // make([]byte, 16)
+var db *AuthDB
+
+func SetDb(conn *database.Conn) {
+	db = NewAuthDBHandler(conn)
+}
 
 func AuthHandler(e *echo.Echo) {
-	GoogleHandler(e)
-	GithubHandler(e)
-	MicrosoftHandler(e)
-	// QRCodeHandler(e)
+	a := e.Group("/auth")
+	GoogleHandler(a)
+	GithubHandler(a)
+	MicrosoftHandler(a)
+	// QRCodeHandler(a)
+
+	UserHandler(a)
 }

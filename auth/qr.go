@@ -8,6 +8,6 @@ func QRCodeLoginHandler(c *echo.Context) error {
 	return nil
 }
 
-func QrHandler(e *echo.Echo) {
-	e.GET("/auth/qr", GithubLoginHandler)
+func QrHandler(a *echo.Group) {
+	a.GET("/qr", GithubLoginHandler)
 }

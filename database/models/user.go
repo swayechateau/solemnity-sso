@@ -1,5 +1,7 @@
 package models
 
+import "github.com/google/uuid"
+
 type User struct {
 	Id               []byte `db:"Id"`
 	Verified         bool   `db:"Verified"`
@@ -35,6 +37,6 @@ func CreateUserPicture() UserPicture {
 	}
 }
 
-func (u *User) IdToUUID() string {
-	return string(u.Id)
+func (u *User) IdToUUID() uuid.UUID {
+	return uuid.UUID(u.Id)
 }

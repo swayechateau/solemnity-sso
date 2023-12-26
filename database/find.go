@@ -58,7 +58,7 @@ func (conn *Conn) FindUserIdByProvider(ctx context.Context, provider models.Prov
 	return u.Id, nil // providerId found
 }
 
-func (conn *Conn) GetUserPictures(ctx context.Context, userId []byte) ([]*models.UserPicture, error) {
+func (conn *Conn) FindUserPicturesByUserId(ctx context.Context, userId []byte) ([]*models.UserPicture, error) {
 	var userPictures []*models.UserPicture
 
 	rows, err := conn.Query(ctx, query.FindUserPictureByUserId, userId)
@@ -78,7 +78,7 @@ func (conn *Conn) GetUserPictures(ctx context.Context, userId []byte) ([]*models
 	return userPictures, nil
 }
 
-func (conn *Conn) GetUserEmails(ctx context.Context, userId []byte) ([]*models.UserEmail, error) {
+func (conn *Conn) FindUserEmailsByUserId(ctx context.Context, userId []byte) ([]*models.UserEmail, error) {
 	var userEmails []*models.UserEmail
 
 	rows, err := conn.Query(ctx, query.FindUserEmailByUserId, userId)
@@ -98,7 +98,7 @@ func (conn *Conn) GetUserEmails(ctx context.Context, userId []byte) ([]*models.U
 	return userEmails, nil
 }
 
-func (conn *Conn) GetUserProviders(ctx context.Context, userId []byte) ([]*models.OAuthProvider, error) {
+func (conn *Conn) FindUserOAuthProvidersByUserId(ctx context.Context, userId []byte) ([]*models.OAuthProvider, error) {
 	var userProviders []*models.OAuthProvider
 
 	rows, err := conn.Query(ctx, query.FindOAuthProviderByUserId, userId)

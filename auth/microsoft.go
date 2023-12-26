@@ -50,7 +50,7 @@ func MicrosoftCallbackHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "Content: "+string(content))
 }
 
-func MicrosoftHandler(e *echo.Echo) {
-	e.GET("/auth/microsoft", MicrosoftLoginHandler)
-	e.GET("/auth/microsoft/callback", MicrosoftCallbackHandler)
+func MicrosoftHandler(a *echo.Group) {
+	a.GET("/microsoft", MicrosoftLoginHandler)
+	a.GET("/microsoft/callback", MicrosoftCallbackHandler)
 }
