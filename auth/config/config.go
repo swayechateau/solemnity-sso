@@ -54,7 +54,7 @@ func checkEnv(env string) string {
 		return os.Getenv(env)
 	}
 
-	tail := "not set... I hope you know what you're doing!"
+	tail := "not set... I hope you know what you're doing! \n\n"
 	fmt.Printf(env + " " + tail)
 	return ""
 }
@@ -64,7 +64,7 @@ func setUrl(env string, url string) string {
 		return os.Getenv(env)
 	}
 
-	tail := "not set... Using: " + url
+	tail := "not set... Using: " + url + " \n\n"
 	fmt.Printf(env + " " + tail)
 	return url
 }
