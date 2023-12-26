@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS UserPictures (
     Id VARCHAR(255) PRIMARY KEY,
     PictureType VARCHAR(50),
     PictureUrl VARCHAR(255),
-    UserId BINARY(16)),
+    UserId BINARY(16),
     FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
 );
 
@@ -78,17 +78,15 @@ CREATE TABLE IF NOT EXISTS UserConsents (
     UserId BINARY(16),
     ClientId VARCHAR(255),
     Scopes TEXT,
-    FOREIGN KEY (ClientId) REFERENCES Clients(Id) ON DELETE CASCADE
-    FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
+    FOREIGN KEY (ClientId) REFERENCES Clients(Id) ON DELETE CASCADE,
+    FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
 );
 
 -- Scopes
 CREATE TABLE IF NOT EXISTS Scopes (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     ScopeName VARCHAR(255) UNIQUE,
-    description TEXT
+    ScopeDescription TEXT
 );
 
 
--- INSERT INTO Users (id, user) VALUES (UNHEX(REPLACE(UUID(), '-', '')), 'Jimmy');
--- SELECT HEX(id) as id, user FROM Users WHERE HEX(id) = 'YOUR_UUID_HERE';
