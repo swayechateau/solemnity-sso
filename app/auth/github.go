@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"sso/auth/config"
-	"sso/auth/github"
-	"sso/auth/user"
+	"sso/app/config"
+	"sso/oauth2/github"
+	"sso/oauth2/provider"
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
@@ -42,7 +42,7 @@ func GithubCallbackHandler(c echo.Context) error {
 		return fmt.Errorf("code exchange failed: %s", err.Error())
 	}
 
-	content, err := user.GetOAuthInfo(token, github.Api)
+	content, err := provider.GetOAuthInfo(token, github.Api)
 	if err != nil {
 		fmt.Println(err.Error())
 		return c.Redirect(http.StatusTemporaryRedirect, "/")

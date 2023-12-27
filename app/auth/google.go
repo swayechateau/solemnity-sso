@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sso/auth/config"
-	"sso/auth/google"
-	"sso/auth/user"
+	"sso/app/config"
+	"sso/oauth2/google"
+	"sso/oauth2/provider"
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
@@ -38,7 +38,7 @@ func GoogleCallbackHandler(c echo.Context) error {
 		return fmt.Errorf("code exchange failed: %s", err.Error())
 	}
 
-	content, err := user.GetOAuthInfo(token, google.Api)
+	content, err := provider.GetOAuthInfo(token, google.Api)
 	if err != nil {
 		fmt.Println(err.Error())
 		return c.Redirect(http.StatusTemporaryRedirect, "/")

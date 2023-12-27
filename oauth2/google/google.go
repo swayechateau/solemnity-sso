@@ -2,7 +2,7 @@ package google
 
 import (
 	"encoding/json"
-	"sso/auth/scopes"
+	"sso/oauth2/scopes"
 
 	"golang.org/x/oauth2"
 )
