@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS Providers (
     ProviderName VARCHAR(255),
     ProviderId VARCHAR(255),
     Principal VARCHAR(255),
-    Token LONGTEXT,
     UserId BINARY(16),
     FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
     UNIQUE (ProviderName, ProviderId),
