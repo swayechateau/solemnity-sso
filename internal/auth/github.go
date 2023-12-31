@@ -35,22 +35,28 @@ func GithubLoginHandler(c *way.Context) {
 func GithubCallbackHandler(c *way.Context) {
 	state := c.Request.FormValue("state")
 	code := c.Request.FormValue("code")
-	ctx := c.Request.Context()
+	ctx := c.Request.Context() // TODO: use context.Background() instead
 
-	if state != githubStateString {
-		c.JSON(http.StatusBadRequest, fmt.Errorf("invalid oauth state"))
+	if state != microsoftStateString {
+		// c.JSON(http.StatusBadRequest, fmt.Errorf("invalid oauth state"))
+		c.Response.Write([]byte("invalid oauth state"))
+		return
 	}
 
 	token, err := githubOauthConfig.Exchange(ctx, code)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, fmt.Errorf("code exchange failed: %s", err.Error()))
+		// c.JSON(http.StatusBadRequest, fmt.Errorf("code exchange failed: %s", err.Error()))
+		c.Response.Write([]byte(fmt.Sprintf("code exchange failed: %s", err.Error())))
+		return
 	}
 
 	content, err := provider.GetOAuthInfo(github.TokenType, token, github.Api)
 	if err != nil {
 		log.Printf("ERROR: %v", err.Error())
 		c.Redirect("/", http.StatusTemporaryRedirect)
+		return
 	}
-
-	c.JSON(http.StatusOK, "Content: "+string(content))
+	log.Printf("Content: %v", content)
+	// c.r(http.StatusOK, "Content: "+string(content))
+	c.Response.Write([]byte(fmt.Sprintf("Content: %s\n", content)))
 }
