@@ -37,7 +37,7 @@ func GithubCallbackHandler(c *way.Context) {
 	code := c.Request.FormValue("code")
 	ctx := c.Request.Context() // TODO: use context.Background() instead
 
-	if state != microsoftStateString {
+	if state != githubStateString {
 		// c.JSON(http.StatusBadRequest, fmt.Errorf("invalid oauth state"))
 		c.Response.Write([]byte("invalid oauth state"))
 		return
