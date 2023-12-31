@@ -2,11 +2,11 @@ package models
 
 // OAuth2 Server Tables
 type Client struct {
-	Id           string `db:"Id"`
-	ClientSecret string `db:"ClientSecret"`
-	RedirectUri  string `db:"RedirectUri"`
-	Scopes       string `db:"Scopes"`
-	GrantTypes   string `db:"GrantTypes"`
+	Id           string   `db:"Id"`
+	ClientSecret string   `db:"ClientSecret"`
+	RedirectURIs []string `db:"RedirectUris"`
+	Scopes       string   `db:"Scopes"`
+	GrantTypes   string   `db:"GrantTypes"`
 }
 
 type AccessToken struct {

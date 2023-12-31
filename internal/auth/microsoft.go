@@ -24,9 +24,10 @@ var microsoftOauthConfig = &oauth2.Config{
 	},
 }
 
-var microsoftStateString = "random"
+var microsoftStateString string
 
 func MicrosoftLoginHandler(c *way.Context) {
+	microsoftStateString = randomCode()
 	url := microsoftOauthConfig.AuthCodeURL(microsoftStateString)
 	c.Redirect(url, http.StatusTemporaryRedirect)
 }

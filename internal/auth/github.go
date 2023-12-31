@@ -24,9 +24,10 @@ var githubOauthConfig = &oauth2.Config{
 	},
 }
 
-var githubStateString = "random"
+var githubStateString string
 
 func GithubLoginHandler(c *way.Context) {
+	githubStateString = randomCode()
 	url := githubOauthConfig.AuthCodeURL(githubStateString)
 	c.Redirect(url, http.StatusTemporaryRedirect)
 }

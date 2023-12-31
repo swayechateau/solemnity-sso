@@ -21,9 +21,10 @@ var googleOauthConfig = &oauth2.Config{
 	Endpoint:     google.Endpoint,
 }
 
-var googleStateString = "random"
+var googleStateString string
 
 func GoogleLoginHandler(c *way.Context) {
+	googleStateString = randomCode()
 	url := googleOauthConfig.AuthCodeURL(googleStateString)
 	c.Redirect(url, http.StatusTemporaryRedirect)
 }

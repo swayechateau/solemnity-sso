@@ -28,7 +28,7 @@ func GetMicrosoftConfig() AuthProviderConfig {
 	return AuthProviderConfig{
 		ClientId:     env.Check("MICROSOFT_CLIENT_ID"),
 		ClientSecret: env.Check("MICROSOFT_CLIENT_SECRET"),
-		RedirectUrl:  env.SetDefault("MICROSOFT_REDIRECT_URL", "http://localhost:8080/auth/microsoft/callback"),
+		RedirectUrl:  env.SetDefault("MICROSOFT_REDIRECT_URL", "http://localhost:8080/oauth2/microsoft/callback"),
 	}
 }
 
