@@ -19,16 +19,7 @@ func App() {
 
 	auth.AuthHandler(way)
 	way.GET("/", yourHandler)
-	// way.GET("/auth/google", auth.GoogleLoginHandler)
-	// way.GET("/auth/google/callback", auth.GoogleCallbackHandler)
 
-	// way.GET("/auth/github", auth.GithubLoginHandler)
-	// way.GET("/auth/github/callback", auth.GithubCallbackHandler)
-
-	way.GET("/auth/microsoft", auth.MicrosoftLoginHandler)
-	way.GET("/auth/microsoft/callback", auth.MicrosoftCallbackHandler)
-
-	// way.GET("/oauth2/qr", auth.QRCodeLoginHandler)
 	// w.GET("/user/:id", dbHandler(c))
 
 	port := config.GetPort()
