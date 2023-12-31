@@ -1,8 +1,8 @@
 -- Migration: Initial Schema
 -- Created by: SolemnitySSO
 -- Created on: 2023-12-26 04:52:00
--- Last Modified: 2023-12-26 04:52:00
--- Version: 0.9.0
+-- Last Modified: 2023-12-31 22:50:00
+-- Version: 0.10.0
 -- Description: This migration creates the initial schema for the SolemnitySSO OAuth Server.
 
 -- Create the Users table
@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS Users (
     Id BINARY(16) PRIMARY KEY,
     Verified BOOLEAN,
     DisplayName VARCHAR(255),
-    PrimaryEmail VARCHAR(255),
-    PrimaryPictureId VARCHAR(255),
+    PrimaryEmail VARCHAR(255) NOT NULL UNIQUE,
+    PrimaryPictureId BINARY(16),
     PrimaryLanguage VARCHAR(255),
     CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS Users (
 
 -- Create the User Pictures table
 CREATE TABLE IF NOT EXISTS UserPictures (
-    Id VARCHAR(255) PRIMARY KEY,
+    Id BINARY(16) PRIMARY KEY,
     PictureType VARCHAR(50),
     PictureUrl VARCHAR(255),
     UserId BINARY(16),
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS Providers (
 CREATE TABLE IF NOT EXISTS Clients (
     Id VARCHAR(255) PRIMARY KEY,
     ClientSecret VARCHAR(255),
-    RedirectUri TEXT,
+    RedirectUris TEXT,
     Scopes TEXT,
     GrantTypes TEXT,
     CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
