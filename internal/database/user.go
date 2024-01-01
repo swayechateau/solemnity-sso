@@ -2,7 +2,7 @@ package database
 
 import (
 	"database/sql"
-	"sso/pkg/database/models"
+	"sso/internal/database/models"
 	"sso/pkg/database/query"
 
 	"github.com/swayedev/way"
@@ -11,7 +11,7 @@ import (
 // User
 
 // Find User by Id
-func FindUserById(w way.Context, id []byte) (*models.User, error) {
+func FindUserById(w *way.Context, id [16]byte) (*models.User, error) {
 	var u models.User
 	ctx := w.Request.Context()
 
@@ -27,7 +27,7 @@ func FindUserById(w way.Context, id []byte) (*models.User, error) {
 }
 
 // Find UserId by Email
-func FindUserIdByEmail(w way.Context, email string) ([16]byte, error) {
+func FindUserIdByEmail(w *way.Context, email string) ([16]byte, error) {
 	var u models.User
 	ctx := w.Request.Context()
 
@@ -51,7 +51,7 @@ func FindUserIdByEmail(w way.Context, email string) ([16]byte, error) {
 }
 
 // Find UserId by Provider
-func FindUserIdByProvider(w way.Context, name string, id string) ([16]byte, error) {
+func FindUserIdByProvider(w *way.Context, name string, id string) ([16]byte, error) {
 	var u models.User
 	ctx := w.Request.Context()
 
@@ -68,7 +68,7 @@ func FindUserIdByProvider(w way.Context, name string, id string) ([16]byte, erro
 }
 
 // Create User
-func CreateUser(w way.Context, u models.User) error {
+func CreateUser(w *way.Context, u models.User) error {
 	ctx := w.Request.Context()
 	err := w.SqlExecNoResult(ctx, query.CreateUser, u.Id, u.Verified, u.DisplayName, u.PrimaryEmail, u.PrimaryPictureId, u.PrimaryLanguage)
 	if err != nil {
@@ -85,7 +85,7 @@ func CreateUser(w way.Context, u models.User) error {
 }
 
 // Update User
-func UpdateUser(w way.Context, u *models.User) error {
+func UpdateUser(w *way.Context, u *models.User) error {
 	ctx := w.Request.Context()
 	// check if email exists in UserEmails
 
@@ -97,7 +97,7 @@ func UpdateUser(w way.Context, u *models.User) error {
 }
 
 // Delete User
-func DeleteUser(w way.Context, id []byte) error {
+func DeleteUser(w *way.Context, id [16]byte) error {
 	ctx := w.Request.Context()
 	return w.SqlExecNoResult(ctx, query.DeleteUserById, id)
 }
@@ -105,7 +105,7 @@ func DeleteUser(w way.Context, id []byte) error {
 // User Emails
 
 // Find User Emails by UserId
-func FindUserEmailsByUserId(w way.Context, userId []byte) ([]*models.UserEmail, error) {
+func FindUserEmailsByUserId(w *way.Context, userId [16]byte) ([]*models.UserEmail, error) {
 	var userEmails []*models.UserEmail
 	ctx := w.Request.Context()
 
@@ -127,19 +127,19 @@ func FindUserEmailsByUserId(w way.Context, userId []byte) ([]*models.UserEmail, 
 }
 
 // Create User Email
-func CreateUserEmail(w way.Context, ue models.UserEmail) error {
+func CreateUserEmail(w *way.Context, ue models.UserEmail) error {
 	ctx := w.Request.Context()
 	return w.SqlExecNoResult(ctx, query.CreateUserEmail, ue.Email, ue.Primary, ue.Verified, ue.UserId)
 }
 
 // Update User Email
-func UpdateUserEmail(w way.Context, ue *models.UserEmail) error {
+func UpdateUserEmail(w *way.Context, ue *models.UserEmail) error {
 	ctx := w.Request.Context()
 	return w.SqlExecNoResult(ctx, query.UpdateUserEmail, ue.Primary, ue.Verified, ue.Email)
 }
 
 // Delete User Email
-func DeleteUserEmail(w way.Context, email string) error {
+func DeleteUserEmail(w *way.Context, email string) error {
 	ctx := w.Request.Context()
 	return w.SqlExecNoResult(ctx, query.DeleteUserEmailByEmail, email)
 }
@@ -147,7 +147,7 @@ func DeleteUserEmail(w way.Context, email string) error {
 // User Pictures
 
 // Finc User Pictures by UserId
-func FindUserPicturesByUserId(w way.Context, userId []byte) ([]*models.UserPicture, error) {
+func FindUserPicturesByUserId(w *way.Context, userId [16]byte) ([]*models.UserPicture, error) {
 	var userPictures []*models.UserPicture
 	ctx := w.Request.Context()
 
@@ -169,19 +169,19 @@ func FindUserPicturesByUserId(w way.Context, userId []byte) ([]*models.UserPictu
 }
 
 // Create User Picture
-func CreateUserPicture(w way.Context, up models.UserPicture) error {
+func CreateUserPicture(w *way.Context, up models.UserPicture) error {
 	ctx := w.Request.Context()
 	return w.SqlExecNoResult(ctx, query.CreateUserPicture, up.Id, up.Type, up.Url, up.UserId)
 }
 
 // Update User Picture
-func UpdateUserPicture(w way.Context, up *models.UserPicture) error {
+func UpdateUserPicture(w *way.Context, up *models.UserPicture) error {
 	ctx := w.Request.Context()
 	return w.SqlExecNoResult(ctx, query.UpdateUserPicture, up.Type, up.Url, up.Id)
 }
 
 // Delete User Picture
-func DeleteUserPicture(w way.Context, id string) error {
+func DeleteUserPicture(w *way.Context, id string) error {
 	ctx := w.Request.Context()
 	return w.SqlExecNoResult(ctx, query.DeleteUserPictureById, id)
 }
@@ -189,7 +189,7 @@ func DeleteUserPicture(w way.Context, id string) error {
 // User OAuth Providers
 
 // Find Providers by UserId
-func FindUserProvidersByUserId(w way.Context, userId []byte) ([]*models.Provider, error) {
+func FindUserProvidersByUserId(w *way.Context, userId [16]byte) ([]*models.Provider, error) {
 	var userProviders []*models.Provider
 	ctx := w.Request.Context()
 
