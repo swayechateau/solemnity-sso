@@ -1,11 +1,22 @@
 package config
 
-import "sso/pkg/env"
+import (
+	"sso/pkg/crypt"
+	"sso/pkg/env"
+)
 
 type AuthProviderConfig struct {
 	ClientId     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	RedirectUrl  string `json:"redirect_url"`
+}
+
+func GetCipherKey() string {
+	key := env.Check("CIPHER_KEY")
+	if key != "" {
+		return key
+	}
+	return crypt.EnsureCipherKeyInFile(".env")
 }
 
 func GetGoogleConfig() AuthProviderConfig {
