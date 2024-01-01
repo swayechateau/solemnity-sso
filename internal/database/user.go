@@ -14,64 +14,99 @@ import (
 func FindUserById(w *way.Context, id [16]byte) (*models.User, error) {
 	var u models.User
 	ctx := w.Request.Context()
+	var (
+		byteId        []byte
+		bytePictureId []byte
+	)
 
-	row := w.SqlQueryRow(ctx, query.FindUserById, id)
-	if err := row.Scan(&u.Id, &u.Verified, &u.DisplayName, &u.PrimaryEmail, &u.PrimaryPictureId, &u.PrimaryLanguage); err != nil {
+	row := w.SqlQueryRow(ctx, query.FindUserById, id[:])
+	if err := row.Scan(&byteId, &u.Verified, &u.DisplayName, &u.PrimaryEmail, &bytePictureId, &u.PrimaryLanguage, &u.CreatedAt, &u.UpdatedAt); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // No result found
 		}
 		return nil, err // an error occurred
 	}
-
+	u.SetIdFromBytes(byteId)
+	u.SetPrimaryPictureIdFromBytes(bytePictureId)
 	return &u, nil // User found
+}
+
+func findUserIdInUserEmails(w *way.Context, email string) ([]byte, error) {
+	ctx := w.Request.Context()
+	var byteId []byte
+
+	row := w.SqlQueryRow(ctx, query.FindUserIdByEmail, email)
+	err := row.Scan(&byteId)
+	if err != nil {
+		return nil, err // an error occurred
+	}
+
+	return byteId, nil // User found
 }
 
 // Find UserId by Email
 func FindUserIdByEmail(w *way.Context, email string) ([16]byte, error) {
-	var u models.User
+	var (
+		u      models.User
+		byteId []byte
+	)
 	ctx := w.Request.Context()
 
 	// Search for user by primary email
 	row := w.SqlQueryRow(ctx, query.FindUserIdByPrimaryEmail, email)
-	if err := row.Scan(&u.Id); err != nil {
-		if err != sql.ErrNoRows {
-			return u.Id, err // an error occurred
-		}
-		// If not found, search in UserEmails
-		row = w.SqlQueryRow(ctx, query.FindUserIdByEmail, email)
-		if err := row.Scan(&u.Id); err != nil {
-			if err == sql.ErrNoRows {
-				return u.Id, nil // No result found
-			}
-			return u.Id, err // an error occurred
-		}
+	err := row.Scan(&byteId)
+	u.SetIdFromBytes(byteId)
+	if err == nil {
+		return u.Id, nil // User found
 	}
 
-	return u.Id, nil // User found
+	if err != sql.ErrNoRows {
+		return u.Id, err // an error occurred
+	}
+
+	// Search for user by email in UserEmails
+	byteId, err = findUserIdInUserEmails(w, email)
+	u.SetIdFromBytes(byteId)
+	if err == nil {
+		return u.Id, nil // User found
+	}
+
+	if err != sql.ErrNoRows {
+		return u.Id, err // an error occurred
+	}
+
+	return u.Id, nil // User not found
 }
 
 // Find UserId by Provider
 func FindUserIdByProvider(w *way.Context, name string, id string) ([16]byte, error) {
-	var u models.User
+	var (
+		u      models.User
+		byteId []byte
+	)
 	ctx := w.Request.Context()
 
 	// Search in OAuthProviders
 	row := w.SqlQueryRow(ctx, query.FindProviderByNameAndId, name, id)
-	if err := row.Scan(&u.Id); err != nil {
+	if err := row.Scan(&byteId); err != nil {
 		if err == sql.ErrNoRows {
-			return u.Id, nil // No result found in both tables
+			return u.Id, nil // No result found
 		}
 		return u.Id, err // an error occurred
 	}
-
+	u.SetIdFromBytes(byteId)
 	return u.Id, nil // providerId found
 }
 
 // Create User
 func CreateUser(w *way.Context, u models.User) error {
 	ctx := w.Request.Context()
-	err := w.SqlExecNoResult(ctx, query.CreateUser, u.Id, u.Verified, u.DisplayName, u.PrimaryEmail, u.PrimaryPictureId, u.PrimaryLanguage)
-	if err != nil {
+	if err := w.SqlExecNoResult(
+		ctx, query.CreateUser, u.Id[:],
+		u.Verified, u.DisplayName,
+		u.PrimaryEmail, u.PrimaryPictureId[:],
+		u.PrimaryLanguage,
+	); err != nil {
 		return err
 	}
 
@@ -129,7 +164,7 @@ func FindUserEmailsByUserId(w *way.Context, userId [16]byte) ([]*models.UserEmai
 // Create User Email
 func CreateUserEmail(w *way.Context, ue models.UserEmail) error {
 	ctx := w.Request.Context()
-	return w.SqlExecNoResult(ctx, query.CreateUserEmail, ue.Email, ue.Primary, ue.Verified, ue.UserId)
+	return w.SqlExecNoResult(ctx, query.CreateUserEmail, ue.Email, ue.Primary, ue.Verified, ue.UserId[:])
 }
 
 // Update User Email

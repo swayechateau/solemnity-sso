@@ -8,6 +8,11 @@ import (
 
 type Provider models.Provider
 
+type ProviderJson struct {
+	Name      string `json:"name"`
+	Principal string `json:"principal"`
+}
+
 func (p *Provider) SetProviderUserId(id string) error {
 	encryptedId, err := crypt.Encrypt([]byte(id), config.GetCipherKey())
 	if err != nil {
@@ -40,4 +45,12 @@ func (p *Provider) GetPrincipal() (string, error) {
 		return "", err
 	}
 	return string(decryptedPrincipal), nil
+}
+
+func (p *Provider) ToJson() ProviderJson {
+	principal, _ := p.GetPrincipal()
+	return ProviderJson{
+		Name:      p.Name,
+		Principal: principal,
+	}
 }
