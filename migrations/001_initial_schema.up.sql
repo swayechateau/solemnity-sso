@@ -1,8 +1,8 @@
 -- Migration: Initial Schema
 -- Created by: SolemnitySSO
 -- Created on: 2023-12-26 04:52:00
--- Last Modified: 2023-12-31 22:50:00
--- Version: 0.10.0
+-- Last Modified: 2023-01-01 00:20:00
+-- Version: 0.10.1
 -- Description: This migration creates the initial schema for the SolemnitySSO OAuth Server.
 
 -- Create the Users table
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS UserEmails (
 
 -- Create the OAuth Providers table
 CREATE TABLE IF NOT EXISTS Providers (
-    Id VARCHAR(255) PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     ProviderName VARCHAR(255),
     ProviderId VARCHAR(255),
     Principal VARCHAR(255),
