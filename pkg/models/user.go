@@ -1,6 +1,8 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type User struct {
 	Id              [16]byte      `json:"id" db:"Id"`
@@ -14,18 +16,9 @@ type User struct {
 	Providers       []Provider    `json:"providers" db:"-"`
 }
 
-type UserPicture struct {
-	Id     string   `json:"id" db:"Id"`
-	Type   string   `json:"type" db:"Type"` // gif, jpeg, png
-	Url    string   `json:"url" db:"Url"`
-	UserId [16]byte `json:"-" db:"UserId"`
-}
-
-type UserEmail struct {
-	Email    string   `json:"email" db:"Email"`
-	Primary  bool     `json:"primary" db:"IsPrimary"`
-	Verified bool     `json:"verified" db:"Verified"`
-	UserId   [16]byte `json:"-" db:"UserId"`
+// User ID functions
+func (u *User) NewId() {
+	u.Id = uuid.New()
 }
 
 func (u *User) IdToUUID() uuid.UUID {
