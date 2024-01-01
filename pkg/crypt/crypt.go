@@ -12,24 +12,39 @@ import (
 )
 
 func EnsureCipherKeyInFile(fileName string) string {
+	// Read the file content
 	content, err := os.ReadFile(fileName)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	if !strings.Contains(string(content), "CIPHER_KEY=") {
-		key := GenerateRandom32ByteKey()
-		newContent := string(content) + "\nCIPHER_KEY=" + key
-		err := os.WriteFile(fileName, []byte(newContent), 0644)
+		log.Printf("Creating %s", fileName)
+		err = os.WriteFile(fileName, []byte("CIPHER_KEY="), 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("CIPHER_KEY=%v", key)
-		return key
-	} else {
-		log.Printf("CIPHER_KEY=%v", strings.Split(string(content), "CIPHER_KEY=")[1])
-		return strings.Split(string(content), "CIPHER_KEY=")[1]
+		return EnsureCipherKeyInFile(fileName)
 	}
+
+	// Check if the key exists and is not empty
+	var key string
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "CIPHER_KEY=") {
+			key = strings.TrimPrefix(line, "CIPHER_KEY=")
+			break
+		}
+	}
+
+	// If key is empty, generate a new one and update the file
+	if key == "" {
+		log.Println("Generating new CIPHER_KEY")
+		key = GenerateRandom32ByteKey()
+		newContent := strings.Replace(string(content), "CIPHER_KEY=", "CIPHER_KEY="+key, 1)
+		err = os.WriteFile(fileName, []byte(newContent), 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	return key
 }
 
 // Returns a 32 byte string key (16 byte hexadecimal key)
