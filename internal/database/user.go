@@ -1,10 +1,10 @@
 package database
 
 import (
-	"database/sql"
 	"sso/internal/database/models"
 	"sso/pkg/database/query"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/swayedev/way"
 )
 
@@ -14,28 +14,24 @@ import (
 func FindUserById(w *way.Context, id [16]byte) (*models.User, error) {
 	var u models.User
 	ctx := w.Request.Context()
-	var (
-		byteId        []byte
-		bytePictureId []byte
-	)
 
-	row := w.SqlQueryRow(ctx, query.FindUserById, id[:])
-	if err := row.Scan(&byteId, &u.Verified, &u.DisplayName, &u.PrimaryEmail, &bytePictureId, &u.PrimaryLanguage, &u.CreatedAt, &u.UpdatedAt); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No result found
-		}
-		return nil, err // an error occurred
+	row := w.PgxQueryRow(ctx, query.FindUserById, id)
+	err := row.Scan(&u.Id, &u.Verified, &u.DisplayName, &u.PrimaryEmail, &u.PrimaryPictureId, &u.PrimaryLanguage, &u.CreatedAt, &u.UpdatedAt)
+	if err == nil {
+		return &u, nil // User found
+
 	}
-	u.SetIdFromBytes(byteId)
-	u.SetPrimaryPictureIdFromBytes(bytePictureId)
-	return &u, nil // User found
+	if err == pgx.ErrNoRows {
+		return nil, nil // No result found
+	}
+	return nil, err // an error occurred
 }
 
 func findUserIdInUserEmails(w *way.Context, email string) ([]byte, error) {
 	ctx := w.Request.Context()
 	var byteId []byte
 
-	row := w.SqlQueryRow(ctx, query.FindUserIdByEmail, email)
+	row := w.PgxQueryRow(ctx, query.FindUserIdByEmail, email)
 	err := row.Scan(&byteId)
 	if err != nil {
 		return nil, err // an error occurred
@@ -45,66 +41,58 @@ func findUserIdInUserEmails(w *way.Context, email string) ([]byte, error) {
 }
 
 // Find UserId by Email
-func FindUserIdByEmail(w *way.Context, email string) ([16]byte, error) {
-	var (
-		u      models.User
-		byteId []byte
-	)
+func FindUserIdByEmail(w *way.Context, email string) ([]byte, error) {
+	var byteId []byte
 	ctx := w.Request.Context()
 
 	// Search for user by primary email
-	row := w.SqlQueryRow(ctx, query.FindUserIdByPrimaryEmail, email)
+	row := w.PgxQueryRow(ctx, query.FindUserIdByPrimaryEmail, email)
 	err := row.Scan(&byteId)
-	u.SetIdFromBytes(byteId)
 	if err == nil {
-		return u.Id, nil // User found
+		return byteId, nil // User found
 	}
 
-	if err != sql.ErrNoRows {
-		return u.Id, err // an error occurred
+	if err != pgx.ErrNoRows {
+		return nil, err // an error occurred
 	}
 
 	// Search for user by email in UserEmails
 	byteId, err = findUserIdInUserEmails(w, email)
-	u.SetIdFromBytes(byteId)
 	if err == nil {
-		return u.Id, nil // User found
+		return byteId, nil // User found
 	}
 
-	if err != sql.ErrNoRows {
-		return u.Id, err // an error occurred
+	if err != pgx.ErrNoRows {
+		return nil, err // an error occurred
 	}
 
-	return u.Id, nil // User not found
+	return nil, nil // User not found
 }
 
 // Find UserId by Provider
-func FindUserIdByProvider(w *way.Context, name string, id string) ([16]byte, error) {
-	var (
-		u      models.User
-		byteId []byte
-	)
+func FindUserIdByProvider(w *way.Context, name string, id string) ([]byte, error) {
+	var byteId []byte
 	ctx := w.Request.Context()
 
 	// Search in OAuthProviders
-	row := w.SqlQueryRow(ctx, query.FindProviderByNameAndId, name, id)
-	if err := row.Scan(&byteId); err != nil {
-		if err == sql.ErrNoRows {
-			return u.Id, nil // No result found
-		}
-		return u.Id, err // an error occurred
+	row := w.PgxQueryRow(ctx, query.FindProviderByNameAndId, name, id)
+	err := row.Scan(&byteId)
+	if err == nil {
+		return byteId, nil // userId found
 	}
-	u.SetIdFromBytes(byteId)
-	return u.Id, nil // providerId found
+	if err != pgx.ErrNoRows {
+		return nil, err // an error occurred
+	}
+	return nil, nil // No result found
 }
 
 // Create User
 func CreateUser(w *way.Context, u models.User) error {
 	ctx := w.Request.Context()
-	if err := w.SqlExecNoResult(
-		ctx, query.CreateUser, u.Id[:],
+	if err := w.PgxExecNoResult(
+		ctx, query.CreateUser, u.Id,
 		u.Verified, u.DisplayName,
-		u.PrimaryEmail, u.PrimaryPictureId[:],
+		u.PrimaryEmail, u.PrimaryPictureId,
 		u.PrimaryLanguage,
 	); err != nil {
 		return err
@@ -128,13 +116,13 @@ func UpdateUser(w *way.Context, u *models.User) error {
 
 	// if yes, update it
 
-	return w.SqlExecNoResult(ctx, query.UpdateUser, u.Verified, u.DisplayName, u.PrimaryEmail, u.PrimaryPictureId, u.PrimaryLanguage, u.Id)
+	return w.PgxExecNoResult(ctx, query.UpdateUser, u.Verified, u.DisplayName, u.PrimaryEmail, u.PrimaryPictureId, u.PrimaryLanguage, u.Id)
 }
 
 // Delete User
 func DeleteUser(w *way.Context, id [16]byte) error {
 	ctx := w.Request.Context()
-	return w.SqlExecNoResult(ctx, query.DeleteUserById, id)
+	return w.PgxExecNoResult(ctx, query.DeleteUserById, id)
 }
 
 // User Emails
@@ -144,7 +132,7 @@ func FindUserEmailsByUserId(w *way.Context, userId [16]byte) ([]*models.UserEmai
 	var userEmails []*models.UserEmail
 	ctx := w.Request.Context()
 
-	rows, err := w.SqlQuery(ctx, query.FindUserEmailByUserId, userId)
+	rows, err := w.PgxQuery(ctx, query.FindUserEmailByUserId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -164,19 +152,19 @@ func FindUserEmailsByUserId(w *way.Context, userId [16]byte) ([]*models.UserEmai
 // Create User Email
 func CreateUserEmail(w *way.Context, ue models.UserEmail) error {
 	ctx := w.Request.Context()
-	return w.SqlExecNoResult(ctx, query.CreateUserEmail, ue.Email, ue.Primary, ue.Verified, ue.UserId[:])
+	return w.PgxExecNoResult(ctx, query.CreateUserEmail, ue.Email, ue.Primary, ue.Verified, ue.UserId)
 }
 
 // Update User Email
 func UpdateUserEmail(w *way.Context, ue *models.UserEmail) error {
 	ctx := w.Request.Context()
-	return w.SqlExecNoResult(ctx, query.UpdateUserEmail, ue.Primary, ue.Verified, ue.Email)
+	return w.PgxExecNoResult(ctx, query.UpdateUserEmail, ue.Primary, ue.Verified, ue.Email)
 }
 
 // Delete User Email
 func DeleteUserEmail(w *way.Context, email string) error {
 	ctx := w.Request.Context()
-	return w.SqlExecNoResult(ctx, query.DeleteUserEmailByEmail, email)
+	return w.PgxExecNoResult(ctx, query.DeleteUserEmailByEmail, email)
 }
 
 // User Pictures
@@ -186,7 +174,7 @@ func FindUserPicturesByUserId(w *way.Context, userId [16]byte) ([]*models.UserPi
 	var userPictures []*models.UserPicture
 	ctx := w.Request.Context()
 
-	rows, err := w.SqlQuery(ctx, query.FindUserPictureByUserId, userId)
+	rows, err := w.PgxQuery(ctx, query.FindUserPictureByUserId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -206,19 +194,19 @@ func FindUserPicturesByUserId(w *way.Context, userId [16]byte) ([]*models.UserPi
 // Create User Picture
 func CreateUserPicture(w *way.Context, up models.UserPicture) error {
 	ctx := w.Request.Context()
-	return w.SqlExecNoResult(ctx, query.CreateUserPicture, up.Id, up.Type, up.Url, up.UserId)
+	return w.PgxExecNoResult(ctx, query.CreateUserPicture, up.Id, up.Type, up.Url, up.UserId)
 }
 
 // Update User Picture
 func UpdateUserPicture(w *way.Context, up *models.UserPicture) error {
 	ctx := w.Request.Context()
-	return w.SqlExecNoResult(ctx, query.UpdateUserPicture, up.Type, up.Url, up.Id)
+	return w.PgxExecNoResult(ctx, query.UpdateUserPicture, up.Type, up.Url, up.Id)
 }
 
 // Delete User Picture
 func DeleteUserPicture(w *way.Context, id string) error {
 	ctx := w.Request.Context()
-	return w.SqlExecNoResult(ctx, query.DeleteUserPictureById, id)
+	return w.PgxExecNoResult(ctx, query.DeleteUserPictureById, id)
 }
 
 // User OAuth Providers
@@ -228,7 +216,7 @@ func FindUserProvidersByUserId(w *way.Context, userId [16]byte) ([]*models.Provi
 	var userProviders []*models.Provider
 	ctx := w.Request.Context()
 
-	rows, err := w.SqlQuery(ctx, query.FindProviderByUserId, userId)
+	rows, err := w.PgxQuery(ctx, query.FindProviderByUserId, userId)
 	if err != nil {
 		return nil, err
 	}

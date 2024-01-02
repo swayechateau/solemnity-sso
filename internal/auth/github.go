@@ -29,7 +29,7 @@ var githubStateString string
 func GithubLoginHandler(c *way.Context) {
 	githubStateString = randomCode()
 	url := githubOauthConfig.AuthCodeURL(githubStateString)
-	c.Redirect(url, http.StatusTemporaryRedirect)
+	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
 func GithubCallbackHandler(c *way.Context) {
@@ -53,7 +53,7 @@ func GithubCallbackHandler(c *way.Context) {
 	content, err := provider.GetOAuthInfo(github.TokenType, token, github.Api)
 	if err != nil {
 		log.Printf("ERROR: %v", err.Error())
-		c.Redirect("/", http.StatusTemporaryRedirect)
+		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
 	log.Printf("Content: %v", content)

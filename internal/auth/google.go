@@ -26,7 +26,7 @@ var googleStateString string
 func GoogleLoginHandler(c *way.Context) {
 	googleStateString = randomCode()
 	url := googleOauthConfig.AuthCodeURL(googleStateString)
-	c.Redirect(url, http.StatusTemporaryRedirect)
+	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
 func GoogleCallbackHandler(c *way.Context) {
@@ -64,7 +64,7 @@ func GoogleCallbackHandler(c *way.Context) {
 	content, err := getUserInfo(c.Response, token)
 	if err != nil {
 		log.Printf("ERROR: %v", err.Error())
-		c.Redirect("/", http.StatusTemporaryRedirect)
+		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
 	log.Printf("Content: %v", content)

@@ -11,7 +11,7 @@ import (
 
 func App() {
 	way := way.New()
-	if err := way.SqlOpen(); err != nil {
+	if err := way.Db().PgxOpen(); err != nil {
 		panic(err)
 	}
 

@@ -3,9 +3,9 @@ module sso
 go 1.21.5
 
 require (
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.5.0
 	github.com/ory/fosite v0.44.0
-	github.com/swayedev/way v0.1.0
+	github.com/swayedev/way v0.2.3
 	golang.org/x/oauth2 v0.15.0
 )
 
@@ -16,7 +16,6 @@ require (
 	github.com/dgraph-io/ristretto v0.0.3 // indirect
 	github.com/ecordell/optgen v0.0.6 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
@@ -25,6 +24,9 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.6.8 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgx/v5 v5.5.1 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mattn/goveralls v0.0.6 // indirect
 	github.com/mitchellh/mapstructure v1.3.2 // indirect

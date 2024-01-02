@@ -29,7 +29,7 @@ var microsoftStateString string
 func MicrosoftLoginHandler(c *way.Context) {
 	microsoftStateString = randomCode()
 	url := microsoftOauthConfig.AuthCodeURL(microsoftStateString)
-	c.Redirect(url, http.StatusTemporaryRedirect)
+	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
 func MicrosoftCallbackHandler(c *way.Context) {
@@ -53,7 +53,7 @@ func MicrosoftCallbackHandler(c *way.Context) {
 	content, err := provider.GetOAuthInfo(microsoft.TokenType, token, microsoft.Api)
 	if err != nil {
 		log.Printf("ERROR: %v", err.Error())
-		c.Redirect("/", http.StatusTemporaryRedirect)
+		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
 	log.Printf("Content: %v", content)
