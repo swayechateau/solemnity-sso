@@ -4,8 +4,9 @@ go 1.21.5
 
 require (
 	github.com/google/uuid v1.5.0
+	github.com/jackc/pgx/v5 v5.5.1
 	github.com/ory/fosite v0.44.0
-	github.com/swayedev/way v0.2.3
+	github.com/swayedev/way v0.2.4
 	golang.org/x/oauth2 v0.15.0
 )
 
@@ -26,7 +27,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v5 v5.5.1 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mattn/goveralls v0.0.6 // indirect
 	github.com/mitchellh/mapstructure v1.3.2 // indirect
