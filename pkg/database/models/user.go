@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -8,12 +10,15 @@ type User struct {
 	Id               [16]byte      `json:"id" db:"Id"`
 	Verified         bool          `json:"verified" db:"Verified"`
 	DisplayName      string        `json:"display_name" db:"DisplayName"`
-	PrimaryEmail     string        `json:"primary_email" db:"PrimaryEmail"`
+	PrimaryEmailHash string        `json:"-" db:"PrimaryEmailHash"`
+	PrimaryEmail     string        `json:"primary_email" db:"PrimaryEmailAddress"`
 	PrimaryPictureId [16]byte      `json:"primary_picture" db:"PrimaryPicture"`
 	PrimaryLanguage  string        `json:"primary_language" db:"PrimaryLanguage"`
 	Pictures         []UserPicture `json:"pictures" db:"-"`
 	Email            []UserEmail   `json:"emails" db:"-"`
 	Providers        []Provider    `json:"providers" db:"-"`
+	CreatedAt        time.Time     `json:"created_at" db:"CreatedAt"`
+	UpdatedAt        time.Time     `json:"updated_at" db:"UpdatedAt"`
 }
 
 // User ID functions

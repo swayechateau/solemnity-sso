@@ -2,6 +2,7 @@ package models
 
 import (
 	"sso/internal/config"
+	errs "sso/internal/database/errors"
 	"sso/pkg/crypt"
 	"sso/pkg/database/models"
 )
@@ -18,6 +19,7 @@ func (p *Provider) SetProviderUserId(id string) error {
 	if err != nil {
 		return err
 	}
+	p.ProviderUserIdHash = crypt.HashStringToString(id)
 	p.ProviderUserId = encryptedId
 	return nil
 }
@@ -53,4 +55,20 @@ func (p *Provider) ToJson() ProviderJson {
 		Name:      p.Name,
 		Principal: principal,
 	}
+}
+
+func (p *Provider) Validate() error {
+	if p.Name == "" {
+		return errs.ErrProviderNameEmpty
+	}
+	if p.ProviderUserId == "" {
+		return errs.ErrProviderUserIdEmpty
+	}
+	if p.ProviderUserIdHash == "" {
+		return errs.ErrProviderUserIdHashEmpty
+	}
+	if p.Principal == "" {
+		return errs.ErrProviderPrincipalEmpty
+	}
+	return nil
 }

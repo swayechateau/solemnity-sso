@@ -2,6 +2,7 @@ package models
 
 import (
 	"sso/internal/config"
+	errs "sso/internal/database/errors"
 	"sso/pkg/crypt"
 	"sso/pkg/database/models"
 )
@@ -37,4 +38,14 @@ func (e *UserEmail) ToJson() UserEmailJson {
 	userEmailJson.Primary = e.Primary
 	userEmailJson.Verified = e.Verified
 	return userEmailJson
+}
+
+func (e *UserEmail) Validate() error {
+	if e.Email == "" {
+		return errs.ErrEmailEmpty
+	}
+	if e.EmailHash == "" {
+		return errs.ErrEmailHashEmpty
+	}
+	return nil
 }

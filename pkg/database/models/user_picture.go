@@ -1,12 +1,18 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type UserPicture struct {
-	Id     [16]byte `json:"id" db:"Id"`
-	Type   string   `json:"type" db:"Type"` // gif, jpeg, png
-	Url    string   `json:"url" db:"Url"`
-	UserId [16]byte `json:"-" db:"UserId"`
+	Id        [16]byte  `json:"id" db:"Id"`
+	Extension string    `json:"type" db:"Extension"` // gif, jpeg, png
+	Uri       string    `json:"url" db:"Uri"`
+	UserId    [16]byte  `json:"-" db:"UserId"`
+	CreatedAt time.Time `json:"created_at" db:"CreatedAt"`
+	UpdatedAt time.Time `json:"updated_at" db:"UpdatedAt"`
 }
 
 // UserPicture ID functions

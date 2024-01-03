@@ -2,6 +2,7 @@ package models
 
 import (
 	"sso/internal/config"
+	errs "sso/internal/database/errors"
 	"sso/pkg/crypt"
 	"sso/pkg/database/models"
 
@@ -59,4 +60,17 @@ func (p *UserPicture) ToJson() UserPictureJson {
 	userPictureJson.Extension = p.Extension
 	userPictureJson.Url, _ = p.GetUrl()
 	return userPictureJson
+}
+
+func (p *UserPicture) Validate() error {
+	if p.Id == uuid.Nil {
+		return errs.ErrIdEmpty
+	}
+	if p.Extension == "" {
+		return errs.ErrExtensionEmpty
+	}
+	if p.Uri == "" {
+		return errs.ErrUriEmpty
+	}
+	return nil
 }

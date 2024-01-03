@@ -9,6 +9,48 @@ import (
 )
 
 // User
+func GetUser(w *way.Context, id [16]byte) (*models.User, error) {
+	u, err := FindUserById(w, id)
+	if err != nil {
+		return nil, err
+	}
+	if u == nil {
+		return nil, nil
+	}
+	// get user emails
+	emails, err := FindUserEmailsByUserId(w, id)
+	if err != nil {
+		return nil, err
+	}
+	u.Emails = make([]models.UserEmail, len(emails))
+	for i, email := range emails {
+		u.Emails[i] = *email
+	}
+
+	// get user pictures
+	pictures, err := FindUserPicturesByUserId(w, id)
+	if err != nil {
+		return nil, err
+	}
+
+	u.Pictures = make([]models.UserPicture, len(pictures))
+	for i, picture := range pictures {
+		u.Pictures[i] = *picture
+	}
+
+	// get user oauth providers
+	providers, err := FindUserProvidersByUserId(w, id)
+	if err != nil {
+		return nil, err
+	}
+
+	u.Providers = make([]models.Provider, len(providers))
+	for i, provider := range providers {
+		u.Providers[i] = *provider
+	}
+
+	return u, nil
+}
 
 // Find User by Id
 func FindUserById(w *way.Context, id [16]byte) (*models.User, error) {
@@ -16,7 +58,7 @@ func FindUserById(w *way.Context, id [16]byte) (*models.User, error) {
 	ctx := w.Request.Context()
 
 	row := w.PgxQueryRow(ctx, query.FindUserById, id)
-	err := row.Scan(&u.Id, &u.Verified, &u.DisplayName, &u.PrimaryEmail, &u.PrimaryPictureId, &u.PrimaryLanguage, &u.CreatedAt, &u.UpdatedAt)
+	err := row.Scan(&u.Id, &u.Verified, &u.DisplayName, &u.PrimaryEmailHash, &u.PrimaryEmail, &u.PrimaryPictureId, &u.PrimaryLanguage, &u.CreatedAt, &u.UpdatedAt)
 	if err == nil {
 		return &u, nil // User found
 
@@ -75,7 +117,7 @@ func FindUserIdByProvider(w *way.Context, name string, id string) ([]byte, error
 	ctx := w.Request.Context()
 
 	// Search in OAuthProviders
-	row := w.PgxQueryRow(ctx, query.FindProviderByNameAndId, name, id)
+	row := w.PgxQueryRow(ctx, query.FindUserIdByProviderNameAndId, name, id)
 	err := row.Scan(&byteId)
 	if err == nil {
 		return byteId, nil // userId found
@@ -89,9 +131,14 @@ func FindUserIdByProvider(w *way.Context, name string, id string) ([]byte, error
 // Create User
 func CreateUser(w *way.Context, u models.User) error {
 	ctx := w.Request.Context()
+	if err := u.Validate(); err != nil {
+		return err
+	}
+
 	if err := w.PgxExecNoResult(
 		ctx, query.CreateUser, u.Id,
 		u.Verified, u.DisplayName,
+		u.PrimaryEmailHash,
 		u.PrimaryEmail, u.PrimaryPictureId,
 		u.PrimaryLanguage,
 	); err != nil {
@@ -99,11 +146,13 @@ func CreateUser(w *way.Context, u models.User) error {
 	}
 
 	email := models.UserEmail{
-		UserId:   u.Id,
-		Email:    u.PrimaryEmail,
-		Primary:  true,
-		Verified: u.Verified,
+		UserId:    u.Id,
+		EmailHash: u.PrimaryEmailHash,
+		Email:     u.PrimaryEmail,
+		Primary:   true,
+		Verified:  u.Verified,
 	}
+
 	return CreateUserEmail(w, email)
 }
 
@@ -116,119 +165,11 @@ func UpdateUser(w *way.Context, u *models.User) error {
 
 	// if yes, update it
 
-	return w.PgxExecNoResult(ctx, query.UpdateUser, u.Verified, u.DisplayName, u.PrimaryEmail, u.PrimaryPictureId, u.PrimaryLanguage, u.Id)
+	return w.PgxExecNoResult(ctx, query.UpdateUser, u.Verified, u.DisplayName, u.PrimaryEmailHash, u.PrimaryEmail, u.PrimaryPictureId, u.PrimaryLanguage, u.Id)
 }
 
 // Delete User
 func DeleteUser(w *way.Context, id [16]byte) error {
 	ctx := w.Request.Context()
 	return w.PgxExecNoResult(ctx, query.DeleteUserById, id)
-}
-
-// User Emails
-
-// Find User Emails by UserId
-func FindUserEmailsByUserId(w *way.Context, userId [16]byte) ([]*models.UserEmail, error) {
-	var userEmails []*models.UserEmail
-	ctx := w.Request.Context()
-
-	rows, err := w.PgxQuery(ctx, query.FindUserEmailByUserId, userId)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var userEmail models.UserEmail
-		if err := rows.Scan(&userEmail.Email, &userEmail.Primary, &userEmail.Verified, &userEmail.UserId); err != nil {
-			return nil, err
-		}
-		userEmails = append(userEmails, &userEmail)
-	}
-
-	return userEmails, nil
-}
-
-// Create User Email
-func CreateUserEmail(w *way.Context, ue models.UserEmail) error {
-	ctx := w.Request.Context()
-	return w.PgxExecNoResult(ctx, query.CreateUserEmail, ue.Email, ue.Primary, ue.Verified, ue.UserId)
-}
-
-// Update User Email
-func UpdateUserEmail(w *way.Context, ue *models.UserEmail) error {
-	ctx := w.Request.Context()
-	return w.PgxExecNoResult(ctx, query.UpdateUserEmail, ue.Primary, ue.Verified, ue.Email)
-}
-
-// Delete User Email
-func DeleteUserEmail(w *way.Context, email string) error {
-	ctx := w.Request.Context()
-	return w.PgxExecNoResult(ctx, query.DeleteUserEmailByEmail, email)
-}
-
-// User Pictures
-
-// Finc User Pictures by UserId
-func FindUserPicturesByUserId(w *way.Context, userId [16]byte) ([]*models.UserPicture, error) {
-	var userPictures []*models.UserPicture
-	ctx := w.Request.Context()
-
-	rows, err := w.PgxQuery(ctx, query.FindUserPictureByUserId, userId)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var userPicture models.UserPicture
-		if err := rows.Scan(&userPicture.Id, &userPicture.Type, &userPicture.Url, &userPicture.UserId); err != nil {
-			return nil, err
-		}
-		userPictures = append(userPictures, &userPicture)
-	}
-
-	return userPictures, nil
-}
-
-// Create User Picture
-func CreateUserPicture(w *way.Context, up models.UserPicture) error {
-	ctx := w.Request.Context()
-	return w.PgxExecNoResult(ctx, query.CreateUserPicture, up.Id, up.Type, up.Url, up.UserId)
-}
-
-// Update User Picture
-func UpdateUserPicture(w *way.Context, up *models.UserPicture) error {
-	ctx := w.Request.Context()
-	return w.PgxExecNoResult(ctx, query.UpdateUserPicture, up.Type, up.Url, up.Id)
-}
-
-// Delete User Picture
-func DeleteUserPicture(w *way.Context, id string) error {
-	ctx := w.Request.Context()
-	return w.PgxExecNoResult(ctx, query.DeleteUserPictureById, id)
-}
-
-// User OAuth Providers
-
-// Find Providers by UserId
-func FindUserProvidersByUserId(w *way.Context, userId [16]byte) ([]*models.Provider, error) {
-	var userProviders []*models.Provider
-	ctx := w.Request.Context()
-
-	rows, err := w.PgxQuery(ctx, query.FindProviderByUserId, userId)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var userProvider models.Provider
-		if err := rows.Scan(&userProvider.Id, &userProvider.Name, &userProvider.ProviderUserId, &userProvider.Principal, &userProvider.UserId); err != nil {
-			return nil, err
-		}
-		userProviders = append(userProviders, &userProvider)
-	}
-
-	return userProviders, nil
 }

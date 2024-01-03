@@ -2,6 +2,7 @@ package models
 
 import (
 	"sso/internal/config"
+	errs "sso/internal/database/errors"
 	"sso/pkg/crypt"
 	"time"
 
@@ -130,4 +131,18 @@ func (u *User) ToJson() UserJson {
 	}
 
 	return userJson
+}
+
+func (u *User) Validate() error {
+	if u.Id == uuid.Nil {
+		return errs.ErrIdEmpty
+	}
+	if u.PrimaryEmail == "" {
+		return errs.ErrEmailEmpty
+	}
+	if u.PrimaryEmailHash == "" {
+		return errs.ErrEmailHashEmpty
+	}
+
+	return nil
 }
