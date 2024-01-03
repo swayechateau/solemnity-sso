@@ -1,7 +1,7 @@
 -- Migration: Initial Schema
 -- Created by: SolemnitySSO
 -- Created on: 2023-12-26 04:52:00
--- Last Modified: 2023-01-02 03:56:00
+-- Last Modified: 2023-01-02 05:56:00
 -- Version: 0.11.0
 -- Description: This migration creates the initial schema for the SolemnitySSO OAuth Server.
 
@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS Users (
     Id UUID PRIMARY KEY,
     Verified BOOLEAN,
     DisplayName VARCHAR(255),
-    PrimaryEmail VARCHAR(255) NOT NULL UNIQUE,
+    PrimaryEmailHash VARCHAR(255) NOT NULL UNIQUE, -- This is the email address hash
+    PrimaryEmailAddress VARCHAR(255) NOT NULL UNIQUE, -- This is the encrypted email address
     PrimaryPictureId UUID,
     PrimaryLanguage VARCHAR(255),
     CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -20,8 +21,8 @@ CREATE TABLE IF NOT EXISTS Users (
 -- Create the User Pictures table
 CREATE TABLE IF NOT EXISTS UserPictures (
     Id UUID PRIMARY KEY,
-    PictureType VARCHAR(50),
-    PictureUrl VARCHAR(255),
+    Extension VARCHAR(50),
+    Uri VARCHAR(255) NOT NULL,
     UserId UUID,
     FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
     CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -30,7 +31,8 @@ CREATE TABLE IF NOT EXISTS UserPictures (
 
 -- Create the User Emails table
 CREATE TABLE IF NOT EXISTS UserEmails (
-    Email VARCHAR(255) PRIMARY KEY,
+    EmailHash VARCHAR(255) PRIMARY KEY, -- This is the email address hash
+    EmailAddress VARCHAR(255) NOT NULL, -- This is the encrypted email address
     IsPrimary BOOLEAN,
     Verified BOOLEAN,
     UserId UUID,
@@ -44,10 +46,11 @@ CREATE TABLE IF NOT EXISTS Providers (
     Id SERIAL PRIMARY KEY,
     ProviderName VARCHAR(255),
     ProviderId VARCHAR(255),
+    ProviderIdHash VARCHAR(255),
     Principal VARCHAR(255),
     UserId UUID,
     FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
-    UNIQUE (ProviderName, ProviderId),
+    UNIQUE (ProviderName, ProviderIdHash),
     CreatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
