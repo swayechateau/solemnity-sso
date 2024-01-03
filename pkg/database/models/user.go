@@ -23,7 +23,7 @@ type User struct {
 
 // User ID functions
 func (u *User) NewId() {
-	u.Id = uuid.New()
+	u.Id, _ = uuid.NewRandom()
 }
 
 func (u *User) IdToUUID() uuid.UUID {
