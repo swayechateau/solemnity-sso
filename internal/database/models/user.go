@@ -3,7 +3,6 @@ package models
 import (
 	"sso/internal/config"
 	"sso/pkg/crypt"
-	"sso/pkg/database/models"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,17 +13,15 @@ type User struct {
 	Verified         bool          `json:"verified" db:"Verified"`
 	DisplayName      string        `json:"display_name" db:"DisplayName"`
 	PrimaryEmail     string        `json:"primary_email" db:"PrimaryEmail"`
+	PrimaryEmailHash string        `json:"-" db:"PrimaryEmailHash"`
 	PrimaryPictureId [16]byte      `json:"primary_picture" db:"PrimaryPicture"`
 	PrimaryLanguage  string        `json:"primary_language" db:"PrimaryLanguage"`
 	Pictures         []UserPicture `json:"pictures,omitempty" db:"-"`
-	Email            []UserEmail   `json:"emails,omitempty" db:"-"`
+	Emails           []UserEmail   `json:"emails,omitempty" db:"-"`
 	Providers        []Provider    `json:"providers,omitempty" db:"-"`
 	CreatedAt        time.Time     `json:"created_at" db:"CreatedAt"`
 	UpdatedAt        time.Time     `json:"updated_at" db:"UpdatedAt"`
 }
-
-type UserEmail models.UserEmail
-type UserPicture models.UserPicture
 
 type UserJson struct {
 	Id               string            `json:"id"`
@@ -38,18 +35,6 @@ type UserJson struct {
 	Providers        []ProviderJson    `json:"providers,omitempty"`
 	CreatedAt        time.Time         `json:"created_at"`
 	UpdatedAt        time.Time         `json:"updated_at"`
-}
-
-type UserEmailJson struct {
-	Email    string `json:"email"`
-	Primary  bool   `json:"primary"`
-	Verified bool   `json:"verified"`
-}
-
-type UserPictureJson struct {
-	Id        string `json:"id"`
-	Extension string `json:"extension"`
-	Url       string `json:"url"`
 }
 
 func (u *User) GetUuid() uuid.UUID {
@@ -108,6 +93,7 @@ func (u *User) SetPrimaryEmail(email string) error {
 	if err != nil {
 		return err
 	}
+	u.PrimaryEmailHash = crypt.HashStringToString(email)
 	u.PrimaryEmail = encrypted
 	return nil
 }
@@ -122,9 +108,6 @@ func (u *User) GetPrimaryEmail() (string, error) {
 
 func (u *User) ToJson() UserJson {
 	var userJson UserJson
-	userJson.Emails = make([]UserEmailJson, len(u.Email))
-	userJson.Pictures = make([]UserPictureJson, len(u.Pictures))
-	userJson.Providers = make([]ProviderJson, len(u.Providers))
 	userJson.Id = u.GetUuid().String()
 	userJson.Verified = u.Verified
 	userJson.PrimaryLanguage = u.PrimaryLanguage
@@ -138,7 +121,7 @@ func (u *User) ToJson() UserJson {
 		userJson.Pictures = append(userJson.Pictures, picture.ToJson())
 	}
 
-	for _, email := range u.Email {
+	for _, email := range u.Emails {
 		userJson.Emails = append(userJson.Emails, email.ToJson())
 	}
 
@@ -147,70 +130,4 @@ func (u *User) ToJson() UserJson {
 	}
 
 	return userJson
-}
-
-func (e *UserEmail) SetEmail(email string) error {
-	encrypted, err := crypt.Encrypt([]byte(email), config.GetCipherKey())
-	if err != nil {
-		return err
-	}
-	e.Email = encrypted
-	return nil
-}
-
-func (e *UserEmail) GetEmail() (string, error) {
-	decrypted, err := crypt.Decrypt(e.Email, config.GetCipherKey())
-	if err != nil {
-		return "", err
-	}
-	return string(decrypted), nil
-}
-
-func (e *UserEmail) ToJson() UserEmailJson {
-	var userEmailJson UserEmailJson
-	userEmailJson.Email, _ = e.GetEmail()
-	userEmailJson.Primary = e.Primary
-	userEmailJson.Verified = e.Verified
-	return userEmailJson
-}
-
-func (p *UserPicture) GetUuid() uuid.UUID {
-	return p.Id
-}
-
-func (p *UserPicture) SetIdFromBytes(id []byte) {
-	p.Id = uuid.UUID(id)
-}
-
-func (p *UserPicture) SetIdFromString(id string) error {
-	uuid, err := uuid.Parse(id)
-	if err != nil {
-		return err
-	}
-	p.Id = uuid
-	return nil
-}
-
-func (p *UserPicture) SetPictureUrl(url string) error {
-	encrypted, err := crypt.Encrypt([]byte(url), config.GetCipherKey())
-	if err != nil {
-		return err
-	}
-	p.Url = encrypted
-	return nil
-}
-
-func (p *UserPicture) GetPictureUrl() (string, error) {
-	decrypted, err := crypt.Decrypt(p.Url, config.GetCipherKey())
-	if err != nil {
-		return "", err
-	}
-	return string(decrypted), nil
-}
-
-func (p *UserPicture) ToJson() UserPictureJson {
-	var userPictureJson UserPictureJson
-	userPictureJson.Id = p.GetUuid().String()
-	userPictureJson.Url, _ = p.GetPictureUrl()
-	return userPictureJson
 }
