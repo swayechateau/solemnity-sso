@@ -1,6 +1,7 @@
 package database
 
 import (
+	errs "sso/internal/database/errors"
 	"sso/internal/database/models"
 	"sso/pkg/database/query"
 
@@ -82,14 +83,24 @@ func findUserIdInUserEmails(w *way.Context, email string) ([]byte, error) {
 	return byteId, nil // User found
 }
 
-// Find UserId by Email
-func FindUserIdByEmail(w *way.Context, email string) ([]byte, error) {
-	var byteId []byte
+func findUserIdByPrimaryEmail(w *way.Context, email string) ([]byte, error) {
 	ctx := w.Request.Context()
+	var byteId []byte
 
-	// Search for user by primary email
 	row := w.PgxQueryRow(ctx, query.FindUserIdByPrimaryEmail, email)
 	err := row.Scan(&byteId)
+	if err != nil {
+		return nil, err // an error occurred
+	}
+
+	return byteId, nil // User found
+}
+
+// Find UserId by Email
+func FindUserIdByEmail(w *way.Context, email string) ([]byte, error) {
+
+	// Search for user by primary email
+	byteId, err := findUserIdByPrimaryEmail(w, email)
 	if err == nil {
 		return byteId, nil // User found
 	}
@@ -159,13 +170,74 @@ func CreateUser(w *way.Context, u models.User) error {
 // Update User
 func UpdateUser(w *way.Context, u *models.User) error {
 	ctx := w.Request.Context()
-	// check if email exists in UserEmails
-
-	// if not, create it
-
-	// if yes, update it
-
+	if err := u.Validate(); err != nil {
+		return err
+	}
 	return w.PgxExecNoResult(ctx, query.UpdateUser, u.Verified, u.DisplayName, u.PrimaryEmailHash, u.PrimaryEmail, u.PrimaryPictureId, u.PrimaryLanguage, u.Id)
+}
+
+func UpdateUserPrimaryEmail(w *way.Context, email string, id [16]byte) error {
+	var ue models.UserEmail
+	ue.SetEmail(email)
+	ue.Primary = true
+	ue.UserId = id
+	// check if email exists
+	user, err := FindUserById(w, id)
+	if err != nil {
+		return err
+	}
+
+	if user.PrimaryEmailHash == ue.EmailHash {
+		return errs.ErrEmailAlreadySetAsPrimary
+	}
+
+	// check if email exists in UserEmails
+	_, err = FindUserEmailByEmail(w, ue.EmailHash)
+	if err != pgx.ErrNoRows {
+		return err
+	}
+
+	// update old primary email
+	if err := UpdateUserEmailIsPrimary(w, user.PrimaryEmailHash, false); err != nil {
+		return err
+	}
+	user.PrimaryEmailHash = ue.EmailHash
+	user.PrimaryEmail = ue.Email
+	// email exist in UserEmails
+	if err == nil {
+		return UpdateUser(w, user)
+	}
+
+	// create email before updating user
+	if err := CreateUserEmail(w, ue); err != nil {
+		return err
+	}
+
+	return UpdateUser(w, user)
+}
+
+func UpdateUserPrimaryPicture(w *way.Context, id [16]byte, pic models.UserPicture) error {
+	if err := pic.Validate(); err != nil {
+		return err
+	}
+
+	user, err := FindUserById(w, id)
+	if err != nil {
+		return err
+	}
+	if user.PrimaryPictureId == pic.Id {
+		return errs.ErrPictureAlreadySetAsPrimary
+	}
+	// check if picture exists in UserPictures
+	_, err = FindUserPictureById(w, pic.Id)
+	if err != pgx.ErrNoRows {
+		return err
+	}
+	if err == pgx.ErrNoRows {
+		CreateUserPicture(w, pic)
+	}
+	user.PrimaryPictureId = pic.Id
+	return UpdateUser(w, user)
 }
 
 // Delete User

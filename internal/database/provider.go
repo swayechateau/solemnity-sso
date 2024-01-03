@@ -29,15 +29,20 @@ func FindUserProvidersByUserId(w *way.Context, userId [16]byte) ([]*models.Provi
 	return userProviders, nil
 }
 
-func DeleteOAuthProvider(w *way.Context, id int) error {
-	ctx := w.Request.Context()
-	return w.PgxExecNoResult(ctx, query.DeleteProviderById, id)
-}
-
 func CreateProvider(w *way.Context, p models.Provider) error {
 	ctx := w.Request.Context()
 	if err := p.Validate(); err != nil {
 		return err
 	}
 	return w.PgxExecNoResult(ctx, query.CreateProvider, p.Name, p.ProviderUserId, p.ProviderUserIdHash, p.Principal, p.UserId)
+}
+
+func UpdateProvider(w *way.Context, p *models.Provider) error {
+	ctx := w.Request.Context()
+	return w.PgxExecNoResult(ctx, query.UpdateProvider, p.Principal, p.Id)
+}
+
+func DeleteProvider(w *way.Context, id int) error {
+	ctx := w.Request.Context()
+	return w.PgxExecNoResult(ctx, query.DeleteProviderById, id)
 }
