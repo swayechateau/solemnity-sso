@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"sso/internal/config"
 	"sso/internal/database"
+	"sso/internal/database/models"
+
 	"sso/pkg/oauth2/google"
 	"sso/pkg/oauth2/provider"
 
@@ -58,10 +60,41 @@ func GoogleCallbackHandler(c *way.Context) {
 	}
 	log.Printf("Content: %v", content)
 	context := google.JsonToContext(content)
-
-	id, err := database.FindUserIdByProvider(c, "google", context.Id)
+	found, err := findOrUpdateUser(c, "google", context.Id, "", context.Email)
 	if err != nil {
 		log.Printf("ERROR: %v", err.Error())
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+	if found {
+		return
+	}
+	// create new user
+	log.Printf("User not found, creating user")
+	u := models.NewUser()
+	u.SetDisplayName(context.Name)
+	u.SetPrimaryEmail(context.Email)
+	u.PrimaryLanguage = "en"
+	u.Verified = true
+	if err := database.CreateUser(c, u); err != nil {
+		log.Printf("ERROR: %v", err.Error())
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+	_, err = findOrUpdateUser(c, "google", context.Id, "", context.Email)
+	if err != nil {
+		log.Printf("ERROR: %v", err.Error())
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+}
+
+func findOrUpdateUser(c *way.Context, providerName string, providerId string, principal string, email string) (bool, error) {
+	id, err := database.FindUserIdByProvider(c, "google", c.HashStringToString(providerId))
+	if err != nil {
+		log.Printf("ERROR: %v", err.Error())
+		c.JSON(http.StatusBadRequest, ErrorMessage{err.Error()})
+		return false, err
 	}
 
 	if id != nil {
@@ -69,13 +102,18 @@ func GoogleCallbackHandler(c *way.Context) {
 		u, err := database.GetUser(c, [16]byte(id))
 		if err != nil {
 			log.Printf("ERROR: %v", err.Error())
+			c.JSON(http.StatusBadRequest, ErrorMessage{err.Error()})
+			return false, err
 		}
 		c.JSON(http.StatusOK, u.ToJson())
+		return true, nil
 	}
 
-	id, err = database.FindUserIdByEmail(c, context.Email)
+	id, err = database.FindUserIdByEmail(c, c.HashStringToString(email))
 	if err != nil {
 		log.Printf("ERROR: %v", err.Error())
+		c.JSON(http.StatusBadRequest, ErrorMessage{err.Error()})
+		return false, err
 	}
 
 	if id != nil {
@@ -83,10 +121,22 @@ func GoogleCallbackHandler(c *way.Context) {
 		u, err := database.GetUser(c, [16]byte(id))
 		if err != nil {
 			log.Printf("ERROR: %v", err.Error())
+			c.JSON(http.StatusBadRequest, ErrorMessage{err.Error()})
+			return false, err
 		}
+
+		if principal == "" {
+			principal = email
+		}
+		if err := database.CreateProvider(c, models.SetProvider("google", principal, providerId, u.Id)); err != nil {
+			log.Printf("ERROR: %v", err.Error())
+			c.JSON(http.StatusBadRequest, ErrorMessage{err.Error()})
+			return false, err
+		}
+
 		c.JSON(http.StatusOK, u.ToJson())
+		return true, nil
 	}
 
-	log.Printf("User not found, sending context")
-	c.JSON(http.StatusOK, context)
+	return false, nil
 }

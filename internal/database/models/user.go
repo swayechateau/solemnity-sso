@@ -38,6 +38,12 @@ type UserJson struct {
 	UpdatedAt        time.Time         `json:"updated_at"`
 }
 
+func NewUser() User {
+	u := User{}
+	u.Id = uuid.New()
+	u.PrimaryLanguage = "en"
+	return u
+}
 func (u *User) GetUuid() uuid.UUID {
 	return u.Id
 }

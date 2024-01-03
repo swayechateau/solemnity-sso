@@ -131,8 +131,7 @@ func Decrypt(encrypted string, passphrase string) ([]byte, error) {
 // HashStringToString takes a string as input and returns its SHA3-256 hash as a hexadecimal string.
 func HashStringToString(data string) string {
 	hashArray := sha3.Sum256([]byte(data))
-	hashSlice := hashArray[:]
-	return hex.EncodeToString(hashSlice)
+	return hex.EncodeToString(hashArray[:])
 }
 
 // HashString calculates the SHA3-256 hash of the input string.

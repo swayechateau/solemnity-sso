@@ -14,6 +14,16 @@ type ProviderJson struct {
 	Principal string `json:"principal"`
 }
 
+func SetProvider(name string, principal string, subjectId string, userId [16]byte) Provider {
+	p := Provider{
+		Name:   name,
+		UserId: userId,
+	}
+	p.SetPrincipal(principal)
+	p.SetProviderUserId(subjectId)
+	return p
+}
+
 func (p *Provider) SetProviderUserId(id string) error {
 	encryptedId, err := crypt.Encrypt([]byte(id), config.GetCipherKey())
 	if err != nil {
