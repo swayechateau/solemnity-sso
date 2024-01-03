@@ -22,7 +22,7 @@ var (
 )
 
 type GoogleContext struct {
-	Id         string `json:"id"`
+	Id         string `json:"sub"`
 	Email      string `json:"email"`
 	Verified   bool   `json:"verified_email"`
 	Name       string `json:"name"`
