@@ -38,15 +38,14 @@ func MicrosoftCallbackHandler(c *way.Context) {
 	ctx := c.Request.Context() // TODO: use context.Background() instead
 
 	if state != microsoftStateString {
-		// c.JSON(http.StatusBadRequest, fmt.Errorf("invalid oauth state"))
-		c.Response.Write([]byte("invalid oauth state"))
+		errMsg := "invalid oauth state"
+		c.JSON(http.StatusBadRequest, ErrorMessage{errMsg})
 		return
 	}
 
 	token, err := microsoftOauthConfig.Exchange(ctx, code)
 	if err != nil {
-		// c.JSON(http.StatusBadRequest, fmt.Errorf("code exchange failed: %s", err.Error()))
-		c.Response.Write([]byte(fmt.Sprintf("code exchange failed: %s", err.Error())))
+		c.JSON(http.StatusBadRequest, fmt.Errorf("code exchange failed: %s", err.Error()))
 		return
 	}
 
@@ -57,6 +56,5 @@ func MicrosoftCallbackHandler(c *way.Context) {
 		return
 	}
 	log.Printf("Content: %v", content)
-	// c.r(http.StatusOK, "Content: "+string(content))
-	c.Response.Write([]byte(fmt.Sprintf("Content: %s\n", content)))
+	c.JSON(http.StatusOK, microsoft.JsonToContext(content))
 }

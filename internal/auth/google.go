@@ -1,12 +1,13 @@
 package auth
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"sso/internal/config"
+	"sso/internal/database"
 	"sso/pkg/oauth2/google"
+	"sso/pkg/oauth2/provider"
 
 	"github.com/swayedev/way"
 
@@ -34,75 +35,58 @@ func GoogleCallbackHandler(c *way.Context) {
 	code := c.Request.URL.Query().Get("code")
 	ctx := c.Request.Context()
 
-	// Set the Content-Type header and write the error message
-	c.Response.Header().Set("Content-Type", "application/json")
-
 	if state != googleStateString {
-
 		// Create a JSON response with the error message
-		errMsg := fmt.Sprintf(`{"message": "%s"}`, "message: invalid oauth state")
-		// c.JSON(http.StatusBadRequest, )
-		http.Error(c.Response, errMsg, http.StatusBadRequest)
+		errMsg := "invalid oauth state"
+		c.JSON(http.StatusBadRequest, ErrorMessage{errMsg})
 		return
 	}
 
 	token, err := googleOauthConfig.Exchange(ctx, code)
 	if err != nil {
 		// Format the error message
-		er := fmt.Sprintf("code exchange failed: %s", err.Error())
-		errMsg := fmt.Sprintf(`{"message": "%s"}`, er)
-
-		http.Error(c.Response, errMsg, http.StatusBadRequest)
+		errMsg := fmt.Sprintf("code exchange failed: %s", err.Error())
+		c.JSON(http.StatusBadRequest, ErrorMessage{errMsg})
 		return
 	}
 
-	if token != nil {
-		log.Printf("Token: %v", token)
-		// return
-	}
-
-	content, err := getUserInfo(c.Response, token)
+	content, err := provider.GetOAuthInfo(google.TokenType, token, google.Api)
 	if err != nil {
 		log.Printf("ERROR: %v", err.Error())
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
 	log.Printf("Content: %v", content)
+	context := google.JsonToContext(content)
 
-	c.Response.WriteHeader(http.StatusOK)
-	response := map[string]string{"Content": string(content)}
-
-	er := json.NewEncoder(c.Response).Encode(response)
-	if er != nil {
-		// If encoding fails, send an internal server error
-		http.Error(c.Response, "Failed to write response", http.StatusInternalServerError)
-	}
-}
-
-func getUserInfo(w http.ResponseWriter, token *oauth2.Token) ([]byte, error) {
-	// Use the token to fetch user info
-	resp, err := http.Get("https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + token.AccessToken)
+	id, err := database.FindUserIdByProvider(c, "google", context.Id)
 	if err != nil {
-		http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
-		return nil, err
+		log.Printf("ERROR: %v", err.Error())
 	}
-	defer resp.Body.Close()
 
-	var userInfo map[string]interface{}
-	err = json.NewDecoder(resp.Body).Decode(&userInfo)
+	if id != nil {
+		log.Printf("User found, sending user")
+		u, err := database.GetUser(c, [16]byte(id))
+		if err != nil {
+			log.Printf("ERROR: %v", err.Error())
+		}
+		c.JSON(http.StatusOK, u.ToJson())
+	}
+
+	id, err = database.FindUserIdByEmail(c, context.Email)
 	if err != nil {
-		http.Error(w, "Failed to parse user info: "+err.Error(), http.StatusInternalServerError)
-		return nil, err
+		log.Printf("ERROR: %v", err.Error())
 	}
 
-	// Now you have the user info in userInfo. You can marshal it and write it to the response.
-	jsonResponse, err := json.Marshal(userInfo)
-	if err != nil {
-		http.Error(w, "Failed to marshal user info: "+err.Error(), http.StatusInternalServerError)
-		return nil, err
+	if id != nil {
+		log.Printf("User found, sending user")
+		u, err := database.GetUser(c, [16]byte(id))
+		if err != nil {
+			log.Printf("ERROR: %v", err.Error())
+		}
+		c.JSON(http.StatusOK, u.ToJson())
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-	return jsonResponse, nil
+	log.Printf("User not found, sending context")
+	c.JSON(http.StatusOK, context)
 }

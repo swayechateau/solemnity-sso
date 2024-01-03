@@ -4,6 +4,10 @@ import (
 	"github.com/swayedev/way"
 )
 
+type ErrorMessage struct {
+	Message string `json:"message"`
+}
+
 func AuthHandler(w *way.Way) {
 	// default oauth2 endpoints
 	w.GET("/oauth2/user", UserHandler)
